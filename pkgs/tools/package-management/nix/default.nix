@@ -2,6 +2,7 @@
 , pkgconfig, boehmgc, perlPackages, libsodium, aws-sdk-cpp, brotli, readline
 , autoreconfHook, autoconf-archive, bison, flex, libxml2, libxslt, docbook5, docbook5_xsl
 , libseccomp, busybox
+, hostPlatform
 , storeDir ? "/nix/store"
 , stateDir ? "/nix/var"
 , confDir ? "/etc"
@@ -78,6 +79,9 @@ let
 
     doInstallCheck = true;
 
+    # socket path becomes too long otherwise
+    preInstallCheck = lib.optional stdenv.isDarwin "export TMPDIR=/tmp";
+
     separateDebugInfo = stdenv.isLinux;
 
     crossAttrs = {
@@ -95,8 +99,8 @@ let
           --disable-init-state
           --enable-gc
         '' + stdenv.lib.optionalString (
-            stdenv.cross ? nix && stdenv.cross.nix ? system
-        ) ''--with-system=${stdenv.cross.nix.system}'';
+            hostPlatform ? nix && hostPlatform.nix ? system
+        ) ''--with-system=${hostPlatform.nix.system}'';
 
       doInstallCheck = false;
     };
@@ -148,10 +152,10 @@ in rec {
   nix = nixStable;
 
   nixStable = (common rec {
-    name = "nix-1.11.11";
+    name = "nix-1.11.12";
     src = fetchurl {
       url = "http://nixos.org/releases/nix/${name}/${name}.tar.xz";
-      sha256 = "f5b9da21fb412e4c35b6e2bc771cfbf4ca44746be5d99868ff29d6e7604760e5";
+      sha256 = "02e8d85cfc02494fb04c90d8443dfea433639b9f787989b18f54567fd9769dd2";
     };
   }) // { perl-bindings = nixStable; };
 
